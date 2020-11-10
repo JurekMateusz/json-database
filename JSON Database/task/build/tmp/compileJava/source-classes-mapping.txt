@@ -1,28 +1,28 @@
 server/view/Console.java
  server.view.Console
-server/Database.java
- server.Database
+server/commands/set/SetCommand.java
+ server.commands.set.SetCommand
 server/input/Input.java
  server.input.Input
-server/Main.java
- server.Main
-server/commands/exit/ExitCommand.java
- server.commands.exit.ExitCommand
+server/file/FileChannelFacade.java
+ server.file.FileChannelFacade
+server/commands/delete/DeleteCommand.java
+ server.commands.delete.DeleteCommand
 server/commands/Command.java
  server.commands.Command
-client/Main.java
- client.Main
+server/commands/get/GetCommand.java
+ server.commands.get.GetCommand
 server/commands/CommandEnum.java
  server.commands.CommandEnum
 server/commands/UnknownCommand.java
  server.commands.UnknownCommand
 server/input/InputProvider.java
  server.input.InputProvider
-server/commands/get/GetCommand.java
- server.commands.get.GetCommand
-server/commands/set/SetCommand.java
- server.commands.set.SetCommand
-server/commands/delete/DeleteCommand.java
- server.commands.delete.DeleteCommand
-server/file/FileChannelFacade.java
- server.file.FileChannelFacade
+client/Main.java
+ client.Main
+server/Main.java
+ server.Main
+server/commands/exit/ExitCommand.java
+ server.commands.exit.ExitCommand
+server/Database.java
+ server.Database

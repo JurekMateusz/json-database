@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 import static server.commands.CommandEnum.EXIT;
 import static server.commands.CommandEnum.GET;
@@ -43,7 +42,12 @@ public class Database {
         Socket socket = server.accept();
         DataInputStream input = new DataInputStream(socket.getInputStream());
         DataOutputStream output = new DataOutputStream(socket.getOutputStream());
-        
+        String inputt = input.readUTF();
+        inputt = "Received: " + inputt;
+        System.out.println(inputt);
+        System.out.println("Sent: A record # 12 was sent!");
+        output.writeUTF("A record # 12 was sent!");
+
     }
 
     private void print(boolean status, Input input) {

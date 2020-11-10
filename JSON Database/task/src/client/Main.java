@@ -15,9 +15,10 @@ public class Main {
         Socket socket = new Socket(InetAddress.getByName(address), port);
         DataInputStream input = new DataInputStream(socket.getInputStream());
         DataOutputStream output = new DataOutputStream(socket.getOutputStream());
-
+        System.out.println("Client started!");
         String msg = "Sent: Give me a record # 12";
-        output.writeUTF(msg);
+        System.out.println(msg);
+        output.writeUTF("Give me a record # 12");
         String inputt = input.readUTF();
         inputt = "Received: " + inputt;
         System.out.println(inputt);
