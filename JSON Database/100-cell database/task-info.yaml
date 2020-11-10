@@ -157,42 +157,46 @@ files:
         }
     }
   learner_created: false
-- name: src/client/Database.java
+- name: src/server/commands/Command.java
   visible: true
   learner_created: true
-- name: src/client/commands/Command.java
+- name: src/server/commands/UnknownCommand.java
   visible: true
   learner_created: true
-- name: src/client/commands/UnknownCommand.java
+- name: src/server/commands/CommandEnum.java
   visible: true
   learner_created: true
-- name: src/client/view/Console.java
+- name: src/server/commands/exit/ExitCommand.java
   visible: true
   learner_created: true
-- name: src/client/input/Input.java
+- name: src/server/commands/delete/DeleteCommand.java
   visible: true
   learner_created: true
-- name: src/client/input/InputProvider.java
+- name: src/server/commands/get/GetCommand.java
   visible: true
   learner_created: true
-- name: src/client/commands/CommandEnum.java
+- name: src/server/commands/set/SetCommand.java
   visible: true
   learner_created: true
-- name: src/client/commands/exit/ExitCommand.java
+- name: src/server/input/Input.java
   visible: true
   learner_created: true
-- name: src/client/commands/delete/DeleteCommand.java
+- name: src/server/input/InputProvider.java
   visible: true
   learner_created: true
-- name: src/client/commands/get/GetCommand.java
+- name: src/server/file/FileChannelFacade.java
   visible: true
   learner_created: true
-- name: src/client/commands/set/SetCommand.java
+- name: src/server/view/Console.java
   visible: true
   learner_created: true
-- name: src/client/file/FileChannelFacade.java
+- name: src/server/Database.java
   visible: true
   learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/348/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/65/stages/348/implement">JetBrains
+    Academy</a>
+  time: Tue, 10 Nov 2020 18:35:46 UTC
 record: -1
