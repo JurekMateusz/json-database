@@ -2,6 +2,7 @@ package client;
 
 import client.input.Input;
 import com.beust.jcommander.JCommander;
+import com.google.gson.Gson;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -14,7 +15,7 @@ import static client.input.CommandEnum.SET;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        Input empty = Input.empty();
+        Input empty = new Input();
         JCommander.newBuilder()
                 .addObject(empty)
                 .build()
@@ -22,19 +23,14 @@ public class Main {
         if (empty.equals(Input.empty())) {
             throw new IllegalArgumentException("Bad arguments");
         }
-        System.out.println("Sent: " + empty.getCommand().name().toLowerCase() + " "
-                + empty.getCell() + " "+(empty.getCommand() == SET ? empty.getValue() : ""));
         String address = "127.0.0.1";
         int port = 23456;
         Socket socket = new Socket(InetAddress.getByName(address), port);
         DataInputStream input = new DataInputStream(socket.getInputStream());
         DataOutputStream output = new DataOutputStream(socket.getOutputStream());
         System.out.println("Client started!");
-        String send = "";
-        for (int i = 0; i < args.length; i++) {
-            send += args[i] + " ";
-        }
-        output.writeUTF(send);
+        System.out.println("Send: " + new Gson().toJson(empty));
+        output.writeUTF(new Gson().toJson(empty));
 
         String received = input.readUTF();
         received = "Received: " + received;

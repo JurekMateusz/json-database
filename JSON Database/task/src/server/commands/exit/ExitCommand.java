@@ -3,28 +3,19 @@ package server.commands.exit;
 import server.Database;
 import server.Server;
 import server.commands.Command;
-import server.output.OutputProvider;
+import server.model.Output;
 
 public class ExitCommand extends Command {
-
-    private final Database database;
-    private OutputProvider outputProvider;
     private Server server;
 
-    public ExitCommand(Database database, OutputProvider outputProvider, Server server) {
+    public ExitCommand(Server server) {
         super(null, null);
-        this.database = database;
-        this.outputProvider = outputProvider;
         this.server = server;
     }
 
     @Override
-    public boolean execute() {
-        database.setRunning(false);
-        outputProvider.send("OK");
-
-        database.closeConnection();
+    public Output execute() {
         server.setRunning(false);
-        return true;
+        return Output.success();
     }
 }

@@ -1,31 +1,25 @@
 package server.file;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class DataDriveMemoryImpl implements DataDriveFacade {
-    private List<String> dataInList;
-
-    public DataDriveMemoryImpl(int size) {
-        dataInList = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            dataInList.add("");
-        }
-    }
+    private Map<String, String> data = new HashMap<>();
 
     @Override
-    public boolean write(String message, int cell) {
-        dataInList.set(cell, message);
+    public boolean write(String message, String key) {
+        data.put(key, message);
         return true;
     }
 
     @Override
-    public String read(int cell) {
-        return dataInList.get(cell);
+    public String read(String key) {
+        return data.get(key);
     }
 
     @Override
-    public boolean clear(int cell) {
-        return write("", cell);
+    public boolean clear(String key) {
+        return Objects.isNull(data.remove(key));
     }
 }

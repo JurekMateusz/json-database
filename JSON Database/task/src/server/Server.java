@@ -11,17 +11,14 @@ public class Server {
     private static final String ADDRESS = "127.0.0.1";
     private static final int PORT = 23456;
     private boolean isRunning = true;
-    private DataDriveMemoryImpl dataDriveMemory = new DataDriveMemoryImpl(1000);
+    private DataDriveMemoryImpl dataDriveMemory = new DataDriveMemoryImpl();
 
 
     public void start() throws IOException {
         ServerSocket server = new ServerSocket(PORT, 50, InetAddress.getByName(ADDRESS));
         while (isRunning) {
-
-
             Socket socket = server.accept();
             new Database(socket, dataDriveMemory, this).handleRequest();
-
         }
         server.close();
     }

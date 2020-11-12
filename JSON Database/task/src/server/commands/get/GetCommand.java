@@ -2,27 +2,23 @@ package server.commands.get;
 
 import server.commands.Command;
 import server.file.DataDriveFacade;
-import server.input.Input;
-import server.output.OutputProvider;
+import server.model.Input;
+import server.model.Output;
+
+import java.util.Objects;
 
 public class GetCommand extends Command {
-    private final OutputProvider outputProvider;
 
-    public GetCommand(Input input, DataDriveFacade dataHardDrive, OutputProvider outputProvider) {
+    public GetCommand(Input input, DataDriveFacade dataHardDrive) {
         super(input, dataHardDrive);
-        this.outputProvider = outputProvider;
     }
 
     @Override
-    public boolean execute() {
-        if (isNumberCellValid()) {
-            return false;
+    public Output execute() {
+        String message = dataSave.read(input.getKey());
+        if (Objects.isNull(message)) {
+            return Output.failureWithReason("No such key");
         }
-        String message = dataSave.read(input.getCell());
-        if (message.isEmpty()) {
-            return false;
-        }
-        outputProvider.send(message);
-        return true;
+        return Output.successWithValue(message);
     }
 }

@@ -1,68 +1,64 @@
 [1;31m
 Start test 1[0m
-Sent: exit -1 
 Client started!
 Server started!
-Received: OK
+Send: {"type":"exit"}
+Received: {"response":"OK"}
 [1;31m
 Start test 2[0m
-Sent: get 1 
 Client started!
 Server started!
-Received: ERROR
-Sent: set 1 Hello world!
+ Send: {"type":"get","key":"1"}
+7Received: {"response":"ERROR","reason":"No such key"}
 Server started!
 Client started!
-Received: OK
-Sent: set 1 HelloWorld!
+7Send: {"type":"set","key":"1","value":"Hello world!"}
+Received: {"response":"OK"}
 Server started!
 Client started!
-Received: OK
-Sent: get 1 
+6Send: {"type":"set","key":"1","value":"HelloWorld!"}
+Received: {"response":"OK"}
 Server started!
 Client started!
-Received: HelloWorld!
-Sent: delete 1 
+ Send: {"type":"get","key":"1"}
+3Received: {"response":"OK","value":"HelloWorld!"}
 Server started!
 Client started!
-Received: OK
-Sent: delete 1 
+#Send: {"type":"delete","key":"1"}
+Received: {"response":"OK"}
 Server started!
 Client started!
-Received: OK
-Sent: get 1 
+#Send: {"type":"delete","key":"1"}
+7Received: {"response":"ERROR","reason":"No such key"}
 Server started!
 Client started!
-Received: ERROR
-Sent: set 55 Some text here
+ Send: {"type":"get","key":"1"}
+7Received: {"response":"ERROR","reason":"No such key"}
 Server started!
 Client started!
-Received: OK
-Sent: get 55 
+<Send: {"type":"set","key":"text","value":"Some text here"}
+Received: {"response":"OK"}
 Server started!
 Client started!
-Received: Some text here
-Sent: get 56 
+#Send: {"type":"get","key":"text"}
+6Received: {"response":"OK","value":"Some text here"}
 Server started!
 Client started!
-Received: ERROR
-Sent: delete 55 
+!Send: {"type":"get","key":"56"}
+7Received: {"response":"ERROR","reason":"No such key"}
 Server started!
 Client started!
-Received: OK
-Sent: delete 56 
+$Send: {"type":"delete","key":"56"}
+7Received: {"response":"ERROR","reason":"No such key"}
 Server started!
 Client started!
-Received: OK
-Sent: delete 100 
+%Send: {"type":"delete","key":"100"}
+7Received: {"response":"ERROR","reason":"No such key"}
 Server started!
 Client started!
-Received: OK
-Sent: delete 1001 
+=Send: {"type":"delete","key":"That key doesn\u0027t exist"}
+7Received: {"response":"ERROR","reason":"No such key"}
 Server started!
 Client started!
-Received: ERROR
-Sent: exit -1 
-Server started!
-Client started!
-Received: OK
+Send: {"type":"exit"}
+Received: {"response":"OK"}

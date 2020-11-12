@@ -1,7 +1,9 @@
 package server.commands;
 
 import server.file.DataDriveFacade;
-import server.input.Input;
+import server.model.Input;
+import server.model.Output;
+import server.output.OutputProvider;
 
 public abstract class Command {
     protected Input input;
@@ -12,9 +14,6 @@ public abstract class Command {
         this.dataSave = dataSave;
     }
 
-    public abstract boolean execute();
+    public abstract Output execute();
 
-    protected boolean isNumberCellValid() {
-        return input.getCell() < 0 || input.getCell() > 100;
-    }
 }

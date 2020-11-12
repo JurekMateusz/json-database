@@ -2,7 +2,8 @@ package server.commands.delete;
 
 import server.commands.Command;
 import server.file.DataDriveFacade;
-import server.input.Input;
+import server.model.Input;
+import server.model.Output;
 
 public class DeleteCommand extends Command {
     public DeleteCommand(Input input, DataDriveFacade dataSave) {
@@ -10,10 +11,10 @@ public class DeleteCommand extends Command {
     }
 
     @Override
-    public boolean execute() {
-        if (isNumberCellValid()) {
-            return false;
+    public Output execute() {
+        if (dataSave.clear(input.getKey())) {
+            return Output.failureWithReason("No such key");
         }
-        return dataSave.clear(input.getCell());
+        return Output.success();
     }
 }

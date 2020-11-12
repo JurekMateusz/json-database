@@ -1,9 +1,9 @@
 package server.file;
 
 public interface DataDriveFacade {
-    boolean write(String message, int cell);
+    boolean write(String message, String key);
 
-    String read(int cell);
+    String read(String key);
 
-    boolean clear(int cell);
+    boolean clear(String key);
 }

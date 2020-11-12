@@ -1,12 +1,14 @@
 package server.input;
 
-import com.beust.jcommander.JCommander;
+import com.google.gson.Gson;
 import io.vavr.control.Try;
+import server.model.Input;
 
 import java.io.DataInputStream;
 
 public class SocketInputProviderImpl implements InputProvider {
     private final DataInputStream input;
+    private final Gson gson = new Gson();
 
     public SocketInputProviderImpl(DataInputStream input) {
         this.input = input;
@@ -14,13 +16,13 @@ public class SocketInputProviderImpl implements InputProvider {
 
     @Override
     public Input getInputCommand() {
-        Input result = Input.empty();
-        Try<String> input = Try.of(this.input::readUTF);
-        input.onSuccess(s -> JCommander.newBuilder()
-                .addObject(result)
-                .build()
-                .parse(s.trim().split(" ", 6))
-        );
-        return result;
+        return Try.of(this.input::readUTF)
+                .map(s -> gson.fromJson(s, JsonInput.class))
+                .flatMap(jsonInput -> Try.of(() -> Input.builder()
+                        .command(CommandEnum.valueOf(jsonInput.getType().toUpperCase()))
+                        .key(jsonInput.getKey())
+                        .value(jsonInput.getValue())
+                        .build())
+                ).getOrElse(Input.empty());
     }
 }

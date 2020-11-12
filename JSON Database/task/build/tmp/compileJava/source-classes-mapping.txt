@@ -1,50 +1,51 @@
-server/commands/get/GetCommand.java
- server.commands.get.GetCommand
-server/input/InputProvider.java
- server.input.InputProvider
-server/commands/delete/DeleteCommand.java
- server.commands.delete.DeleteCommand
-server/input/Input.java
- server.input.Input
+server/Database.java
+ server.Database
+client/input/CommandEnum.java
+ client.input.CommandEnum
+server/model/Output.java
+ server.model.Output
+server/Main.java
+ server.Main
+server/file/DataDriveFacade.java
+ server.file.DataDriveFacade
 server/output/SocketOutputProvider.java
  server.output.SocketOutputProvider
-server/input/SocketInputProviderImpl.java
- server.input.SocketInputProviderImpl
+server/output/OutputProvider.java
+ server.output.OutputProvider
+server/output/Console.java
+ server.output.Console
 client/input/EnumConverter.java
  client.input.EnumConverter
 server/input/CommandEnum.java
  server.input.CommandEnum
-client/input/CommandEnum.java
- client.input.CommandEnum
+server/input/EnumConverter.java
+ server.input.EnumConverter
+server/model/Input.java
+ server.model.Input
+ server.model.Input$InputBuilder
+server/input/JsonInput.java
+ server.input.JsonInput
+server/input/InputProvider.java
+ server.input.InputProvider
+server/commands/get/GetCommand.java
+ server.commands.get.GetCommand
 server/commands/UnknownCommand.java
  server.commands.UnknownCommand
 server/commands/set/SetCommand.java
  server.commands.set.SetCommand
-server/output/OutputProvider.java
- server.output.OutputProvider
-server/file/DataDriveMemoryImpl.java
- server.file.DataDriveMemoryImpl
 client/input/Input.java
  client.input.Input
-server/commands/Command.java
- server.commands.Command
-server/input/ConsoleInputProviderImpl.java
- server.input.ConsoleInputProviderImpl
-server/input/EnumConverter.java
- server.input.EnumConverter
-server/file/DataDriveFileImpl.java
- server.file.DataDriveFileImpl
-server/file/DataDriveFacade.java
- server.file.DataDriveFacade
-server/output/Console.java
- server.output.Console
-client/Main.java
- client.Main
-server/Main.java
- server.Main
+server/commands/delete/DeleteCommand.java
+ server.commands.delete.DeleteCommand
 server/commands/exit/ExitCommand.java
  server.commands.exit.ExitCommand
-server/Database.java
- server.Database
+server/input/SocketInputProviderImpl.java
+ server.input.SocketInputProviderImpl
+client/Main.java
+ client.Main
+server/commands/Command.java
+ server.commands.Command
+server/file/DataDriveMemoryImpl.java
+ server.file.DataDriveMemoryImpl
 server/Server.java
  server.Server

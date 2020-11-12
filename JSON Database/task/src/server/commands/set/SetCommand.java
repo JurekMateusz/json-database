@@ -2,9 +2,8 @@ package server.commands.set;
 
 import server.commands.Command;
 import server.file.DataDriveFacade;
-import server.input.Input;
-
-import java.util.Objects;
+import server.model.Input;
+import server.model.Output;
 
 public class SetCommand extends Command {
 
@@ -13,19 +12,17 @@ public class SetCommand extends Command {
     }
 
     @Override
-    public boolean execute() {
-        if (isNumberCellValid() || Objects.isNull(input.getValue())) {
-            return false;
-        }
-        return dataSave.write(getMsgInput(), getCell());
+    public Output execute() {
+        dataSave.write(getMsgInput(), getKey());
+        return Output.success();
     }
 
     private String getMsgInput() {
         return input.getValue();
     }
 
-    private int getCell() {
-        return input.getCell();
+    private String getKey() {
+        return input.getKey();
     }
 
 }

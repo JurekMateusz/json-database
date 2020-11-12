@@ -520,156 +520,6 @@ files:
         }
     }
   learner_created: true
-- name: src/server/input/Input.java
-  visible: true
-  text: |
-    package server.input;
-
-    import com.beust.jcommander.Parameter;
-    import lombok.AccessLevel;
-    import lombok.AllArgsConstructor;
-    import lombok.Getter;
-
-    @Getter
-    @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    public class Input {
-        @Parameter(names = "-t", description = "Type of request", converter = EnumConverter.class)
-        private CommandEnum command;
-        @Parameter(names = "-i", description = "Index of the cell")
-        private int cell;
-        @Parameter(names = "-m", description = "Message saved in database")
-        private String value;
-
-        public static Input of(CommandEnum commandEnum, int cell) {
-            return of(commandEnum, cell, "Not given");
-        }
-
-        public static Input of(CommandEnum commandEnum, int cell, String value) {
-            return new Input(commandEnum, cell, value);
-        }
-
-        public static Input empty() {
-            return of(CommandEnum.ERROR,-1,"Not given");
-        }
-    }
-  learner_created: true
-- name: src/server/file/DataDriveFileImpl.java
-  visible: true
-  text: |
-    package server.file;
-
-    import java.io.IOException;
-    import java.nio.ByteBuffer;
-    import java.nio.channels.FileChannel;
-    import java.nio.file.Path;
-    import java.util.Objects;
-
-    import static java.nio.file.StandardOpenOption.READ;
-    import static java.nio.file.StandardOpenOption.WRITE;
-
-    public class DataDriveFileImpl implements DataDriveFacade {
-        private final String EMPTY_CELL;
-        private final int SIZE_CELL;
-        private final Path file;//Path.of("D:\\PROJEKTY\\JSON Database\\database.txt");
-
-        public DataDriveFileImpl(String path, int sizeCell) {
-            file = Path.of(path);
-            SIZE_CELL = sizeCell;
-            EMPTY_CELL = " ".repeat(SIZE_CELL - 1);
-        }
-
-        private byte[] createCellBytes(String message) {
-            StringBuilder messageBuilder = new StringBuilder(message);
-            messageBuilder.append(" ".repeat(Math.max(0, SIZE_CELL - messageBuilder.length())));
-            message = messageBuilder.toString();
-            return message.getBytes();
-        }
-
-        private int countCellPosition(int cell) {
-            return cell * SIZE_CELL;
-        }
-
-        @Override
-        public boolean write(String message, int cell) {
-            assert Objects.nonNull(message);
-            assert message.length() < SIZE_CELL;
-
-            byte[] bytes = createCellBytes(message);
-            ByteBuffer out = ByteBuffer.wrap(bytes);
-            try (FileChannel fc = (FileChannel.open(file, WRITE))) {
-                int cellPosition = countCellPosition(cell);
-                fc.position(cellPosition);
-                while (out.hasRemaining())
-                    fc.write(out);
-            } catch (IOException x) {
-                x.printStackTrace();
-            }
-            return true;
-        }
-
-        @Override
-        public String read(int cell) {
-            ByteBuffer result = ByteBuffer.allocate(SIZE_CELL);
-            try (FileChannel fc = (FileChannel.open(file, READ))) {
-                int position = countCellPosition(cell);
-                fc.read(result, position);
-            } catch (IOException x) {
-                x.printStackTrace();
-            }
-            result.flip();
-            return new String(result.array()).trim();
-        }
-
-        @Override
-        public boolean clear(int cell) {
-            return write(EMPTY_CELL, cell);
-        }
-
-    }
-  learner_created: true
-- name: src/server/input/ConsoleInputProviderImpl.java
-  visible: true
-  text: |
-    package server.input;
-
-    import io.vavr.control.Try;
-
-    import java.util.Scanner;
-
-    import static server.input.CommandEnum.SET;
-    import static server.input.CommandEnum.UNKNOWN;
-
-    public class ConsoleInputProviderImpl implements InputProvider {
-        private Scanner scanner = new Scanner(System.in);
-
-        @Override
-        public Input getInputCommand() {
-            String input = scanner.nextLine();
-            String[] split = input.split(" +", 3);
-            CommandEnum commandEnum = parseCommand(split[0]);
-            int cell = parseCell(split);
-            if (commandEnum == SET) {
-                Try<String> valueTry = Try.of(() -> split[2]);
-                if (valueTry.isSuccess()) {
-                    return Input.of(commandEnum, cell, valueTry.get());
-                }
-            }
-            return Input.of(commandEnum, cell);
-        }
-
-
-        private CommandEnum parseCommand(String input) {
-            Try<CommandEnum> command = Try.of(() -> CommandEnum.valueOf(input.toUpperCase()));
-            return command.getOrElse(UNKNOWN);
-        }
-
-        private int parseCell(String[] cell) {
-            Try<Integer> of = Try.of(() -> Integer.parseInt(cell[1]));
-            return of.getOrElse(-1);
-        }
-
-    }
-  learner_created: true
 - name: src/server/Server.java
   visible: true
   text: |
@@ -973,6 +823,49 @@ files:
         Input getInputCommand();
     }
   learner_created: true
+- name: src/server/model/Output.java
+  visible: true
+  learner_created: true
+- name: src/server/model/Input.java
+  visible: true
+  text: |
+    package server.input;
+
+    import com.beust.jcommander.Parameter;
+    import lombok.AccessLevel;
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+
+    @Getter
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public class Input {
+        @Parameter(names = "-t", description = "Type of request", converter = EnumConverter.class)
+        private CommandEnum command;
+        @Parameter(names = "-i", description = "Index of the cell")
+        private int cell;
+        @Parameter(names = "-m", description = "Message saved in database")
+        private String value;
+
+        public static Input of(CommandEnum commandEnum, int cell) {
+            return of(commandEnum, cell, "Not given");
+        }
+
+        public static Input of(CommandEnum commandEnum, int cell, String value) {
+            return new Input(commandEnum, cell, value);
+        }
+
+        public static Input empty() {
+            return of(CommandEnum.ERROR,-1,"Not given");
+        }
+    }
+  learner_created: true
+- name: src/server/input/JsonInput.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/351/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/65/stages/351/implement">JetBrains
+    Academy</a>
+  time: Thu, 12 Nov 2020 17:28:38 UTC
 record: -1
