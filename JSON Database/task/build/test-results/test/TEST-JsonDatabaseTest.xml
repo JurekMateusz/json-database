@@ -1,15 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="JsonDatabaseTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2020-11-10T21:19:30" hostname="DESKTOP-FHCM5LM" time="0.683">
+<testsuite name="JsonDatabaseTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2020-11-12T13:16:47" hostname="DESKTOP-FHCM5LM" time="0.445">
   <properties/>
-  <testcase name="start" classname="JsonDatabaseTest" time="0.683"/>
+  <testcase name="start" classname="JsonDatabaseTest" time="0.445"/>
   <system-out><![CDATA[?[1;31m
 Start test 1?[0m
+Sent: exit -1 
+Client started!
+Server started!
+Received: OK
+?[1;31m
+Start test 2?[0m
+Sent: get 1 
+Client started!
+Server started!
+Received: ERROR
+Sent: set 1 Hello world!
 Server started!
 Client started!
-Sent: Give me a record # 12
-Received: Give me a record # 12
-Sent: A record # 12 was sent!
-Received: A record # 12 was sent!
+Received: OK
+Sent: set 1 HelloWorld!
+Server started!
+Client started!
+Received: OK
+Sent: get 1 
+Server started!
+Client started!
+Received: HelloWorld!
+Sent: delete 1 
+Server started!
+Client started!
+Received: OK
+Sent: delete 1 
+Server started!
+Client started!
+Received: OK
+Sent: get 1 
+Server started!
+Client started!
+Received: ERROR
+Sent: set 55 Some text here
+Server started!
+Client started!
+Received: OK
+Sent: get 55 
+Server started!
+Client started!
+Received: Some text here
+Sent: get 56 
+Server started!
+Client started!
+Received: ERROR
+Sent: delete 55 
+Server started!
+Client started!
+Received: OK
+Sent: delete 56 
+Server started!
+Client started!
+Received: OK
+Sent: delete 100 
+Server started!
+Client started!
+Received: OK
+Sent: delete 1001 
+Server started!
+Client started!
+Received: ERROR
+Sent: exit -1 
+Server started!
+Client started!
+Received: OK
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

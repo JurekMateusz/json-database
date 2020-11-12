@@ -9,10 +9,16 @@ import java.util.Objects;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-public class FileChannelFacade {
-    private static final int SIZE_CELL = 50;
-    public static final String EMPTY_CELL = " ".repeat(SIZE_CELL-1);
-    private final Path file = Path.of("D:\\PROJEKTY\\JSON Database\\database.txt");
+public class DataDriveFileImpl implements DataDriveFacade {
+    private final String EMPTY_CELL;
+    private final int SIZE_CELL;
+    private final Path file;//Path.of("D:\\PROJEKTY\\JSON Database\\database.txt");
+
+    public DataDriveFileImpl(String path, int sizeCell) {
+        file = Path.of(path);
+        SIZE_CELL = sizeCell;
+        EMPTY_CELL = " ".repeat(SIZE_CELL - 1);
+    }
 
     private byte[] createCellBytes(String message) {
         StringBuilder messageBuilder = new StringBuilder(message);
@@ -21,18 +27,11 @@ public class FileChannelFacade {
         return message.getBytes();
     }
 
-    public void prepare(int numberOfCells) {
-        StringBuilder messageBuilder = new StringBuilder();
-        messageBuilder.append(" ".repeat(50));
-        for (int i = 0; i < numberOfCells; i++) {
-            write(messageBuilder.toString(), i);
-        }
-    }
-
     private int countCellPosition(int cell) {
         return cell * SIZE_CELL;
     }
 
+    @Override
     public boolean write(String message, int cell) {
         assert Objects.nonNull(message);
         assert message.length() < SIZE_CELL;
@@ -50,6 +49,7 @@ public class FileChannelFacade {
         return true;
     }
 
+    @Override
     public String read(int cell) {
         ByteBuffer result = ByteBuffer.allocate(SIZE_CELL);
         try (FileChannel fc = (FileChannel.open(file, READ))) {
@@ -60,6 +60,11 @@ public class FileChannelFacade {
         }
         result.flip();
         return new String(result.array()).trim();
+    }
+
+    @Override
+    public boolean clear(int cell) {
+        return write(EMPTY_CELL, cell);
     }
 
 }

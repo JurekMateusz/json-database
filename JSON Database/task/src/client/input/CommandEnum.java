@@ -1,4 +1,4 @@
-package server.commands;
+package client.input;
 
 public enum CommandEnum {
     GET,

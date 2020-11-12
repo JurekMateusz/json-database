@@ -373,6 +373,606 @@ files:
 
     }
   learner_created: false
+- name: src/server/input/SocketInputProviderImpl.java
+  visible: true
+  text: |
+    package server.input;
+
+    import com.beust.jcommander.JCommander;
+    import io.vavr.control.Try;
+
+    import java.io.DataInputStream;
+
+    public class SocketInputProviderImpl implements InputProvider {
+        private final DataInputStream input;
+
+        public SocketInputProviderImpl(DataInputStream input) {
+            this.input = input;
+        }
+
+        @Override
+        public Input getInputCommand() {
+            Input result = Input.empty();
+            Try<String> input = Try.of(this.input::readUTF);
+            input.onSuccess(s -> JCommander.newBuilder()
+                    .addObject(result)
+                    .build()
+                    .parse(s.trim().split(" ", 6))
+            );
+            return result;
+        }
+    }
+  learner_created: true
+- name: src/server/output/Console.java
+  visible: true
+  text: |
+    package server.output;
+
+    public class Console implements OutputProvider {
+        public void send(String msg) {
+            System.out.println(msg);
+        }
+    }
+  learner_created: true
+- name: src/server/Database.java
+  visible: true
+  text: |
+    package server;
+
+    import server.commands.Command;
+    import server.commands.UnknownCommand;
+    import server.commands.delete.DeleteCommand;
+    import server.commands.exit.ExitCommand;
+    import server.commands.get.GetCommand;
+    import server.commands.set.SetCommand;
+    import server.file.DataDriveFacade;
+    import server.input.Input;
+    import server.input.InputProvider;
+    import server.input.SocketInputProviderImpl;
+    import server.output.OutputProvider;
+    import server.output.SocketOutputProvider;
+
+    import java.io.DataInputStream;
+    import java.io.DataOutputStream;
+    import java.io.IOException;
+    import java.net.Socket;
+
+    import static io.vavr.API.*;
+    import static server.input.CommandEnum.*;
+
+    public class Database {
+        private boolean isRunning = true;
+        private Socket socket;
+        private Server server;
+        private InputProvider inputProvider;
+        private OutputProvider outputProvider;
+        private DataDriveFacade dataHardDrive;
+
+        public Database(Socket socket, DataDriveFacade dataHardDrive, Server server) throws IOException {
+            this.dataHardDrive = dataHardDrive;
+            this.socket = socket;
+            this.server = server;
+            DataInputStream input = new DataInputStream(socket.getInputStream());
+            DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+            inputProvider = new SocketInputProviderImpl(input);
+            outputProvider = new SocketOutputProvider(output);
+        }
+
+        public void handleRequest() throws IOException {
+            System.out.println("Server started!");
+    //        while (isRunning) {
+            Input input = inputProvider.getInputCommand();
+            Command command = Match(input.getCommand()).of(
+                    Case($(GET), new GetCommand(input, dataHardDrive, outputProvider)),
+                    Case($(SET), new SetCommand(input, dataHardDrive)),
+                    Case($(DELETE), new DeleteCommand(input, dataHardDrive)),
+                    Case($(EXIT), new ExitCommand(this, outputProvider, server)),
+                    Case($(UNKNOWN), new UnknownCommand(input, outputProvider))
+            );
+            boolean status = command.execute();
+            print(status, input);
+            closeConnection();
+    //        }
+        }
+
+        public void closeConnection() {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void print(boolean status, Input input) {
+            if (((input.getCommand() == GET && status)) || EXIT == input.getCommand()) {
+                return;
+            }
+            String message = status ? "OK" : "ERROR";
+            outputProvider.send(message);
+        }
+
+        public void setRunning(boolean running) {
+            isRunning = running;
+        }
+    }
+  learner_created: true
+- name: src/server/commands/Command.java
+  visible: true
+  text: |
+    package server.commands;
+
+    import server.file.DataDriveFacade;
+    import server.input.Input;
+
+    public abstract class Command {
+        protected Input input;
+        protected DataDriveFacade dataSave;
+
+        protected Command(Input input, DataDriveFacade dataSave) {
+            this.input = input;
+            this.dataSave = dataSave;
+        }
+
+        public abstract boolean execute();
+
+        protected boolean isNumberCellValid() {
+            return input.getCell() < 0 || input.getCell() > 100;
+        }
+    }
+  learner_created: true
+- name: src/server/input/Input.java
+  visible: true
+  text: |
+    package server.input;
+
+    import com.beust.jcommander.Parameter;
+    import lombok.AccessLevel;
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+
+    @Getter
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public class Input {
+        @Parameter(names = "-t", description = "Type of request", converter = EnumConverter.class)
+        private CommandEnum command;
+        @Parameter(names = "-i", description = "Index of the cell")
+        private int cell;
+        @Parameter(names = "-m", description = "Message saved in database")
+        private String value;
+
+        public static Input of(CommandEnum commandEnum, int cell) {
+            return of(commandEnum, cell, "Not given");
+        }
+
+        public static Input of(CommandEnum commandEnum, int cell, String value) {
+            return new Input(commandEnum, cell, value);
+        }
+
+        public static Input empty() {
+            return of(CommandEnum.ERROR,-1,"Not given");
+        }
+    }
+  learner_created: true
+- name: src/server/file/DataDriveFileImpl.java
+  visible: true
+  text: |
+    package server.file;
+
+    import java.io.IOException;
+    import java.nio.ByteBuffer;
+    import java.nio.channels.FileChannel;
+    import java.nio.file.Path;
+    import java.util.Objects;
+
+    import static java.nio.file.StandardOpenOption.READ;
+    import static java.nio.file.StandardOpenOption.WRITE;
+
+    public class DataDriveFileImpl implements DataDriveFacade {
+        private final String EMPTY_CELL;
+        private final int SIZE_CELL;
+        private final Path file;//Path.of("D:\\PROJEKTY\\JSON Database\\database.txt");
+
+        public DataDriveFileImpl(String path, int sizeCell) {
+            file = Path.of(path);
+            SIZE_CELL = sizeCell;
+            EMPTY_CELL = " ".repeat(SIZE_CELL - 1);
+        }
+
+        private byte[] createCellBytes(String message) {
+            StringBuilder messageBuilder = new StringBuilder(message);
+            messageBuilder.append(" ".repeat(Math.max(0, SIZE_CELL - messageBuilder.length())));
+            message = messageBuilder.toString();
+            return message.getBytes();
+        }
+
+        private int countCellPosition(int cell) {
+            return cell * SIZE_CELL;
+        }
+
+        @Override
+        public boolean write(String message, int cell) {
+            assert Objects.nonNull(message);
+            assert message.length() < SIZE_CELL;
+
+            byte[] bytes = createCellBytes(message);
+            ByteBuffer out = ByteBuffer.wrap(bytes);
+            try (FileChannel fc = (FileChannel.open(file, WRITE))) {
+                int cellPosition = countCellPosition(cell);
+                fc.position(cellPosition);
+                while (out.hasRemaining())
+                    fc.write(out);
+            } catch (IOException x) {
+                x.printStackTrace();
+            }
+            return true;
+        }
+
+        @Override
+        public String read(int cell) {
+            ByteBuffer result = ByteBuffer.allocate(SIZE_CELL);
+            try (FileChannel fc = (FileChannel.open(file, READ))) {
+                int position = countCellPosition(cell);
+                fc.read(result, position);
+            } catch (IOException x) {
+                x.printStackTrace();
+            }
+            result.flip();
+            return new String(result.array()).trim();
+        }
+
+        @Override
+        public boolean clear(int cell) {
+            return write(EMPTY_CELL, cell);
+        }
+
+    }
+  learner_created: true
+- name: src/server/input/ConsoleInputProviderImpl.java
+  visible: true
+  text: |
+    package server.input;
+
+    import io.vavr.control.Try;
+
+    import java.util.Scanner;
+
+    import static server.input.CommandEnum.SET;
+    import static server.input.CommandEnum.UNKNOWN;
+
+    public class ConsoleInputProviderImpl implements InputProvider {
+        private Scanner scanner = new Scanner(System.in);
+
+        @Override
+        public Input getInputCommand() {
+            String input = scanner.nextLine();
+            String[] split = input.split(" +", 3);
+            CommandEnum commandEnum = parseCommand(split[0]);
+            int cell = parseCell(split);
+            if (commandEnum == SET) {
+                Try<String> valueTry = Try.of(() -> split[2]);
+                if (valueTry.isSuccess()) {
+                    return Input.of(commandEnum, cell, valueTry.get());
+                }
+            }
+            return Input.of(commandEnum, cell);
+        }
+
+
+        private CommandEnum parseCommand(String input) {
+            Try<CommandEnum> command = Try.of(() -> CommandEnum.valueOf(input.toUpperCase()));
+            return command.getOrElse(UNKNOWN);
+        }
+
+        private int parseCell(String[] cell) {
+            Try<Integer> of = Try.of(() -> Integer.parseInt(cell[1]));
+            return of.getOrElse(-1);
+        }
+
+    }
+  learner_created: true
+- name: src/server/Server.java
+  visible: true
+  text: |
+    package server;
+
+    import server.file.DataDriveMemoryImpl;
+
+    import java.io.IOException;
+    import java.net.InetAddress;
+    import java.net.ServerSocket;
+    import java.net.Socket;
+
+    public class Server {
+        private static final String ADDRESS = "127.0.0.1";
+        private static final int PORT = 23456;
+        private boolean isRunning = true;
+        private DataDriveMemoryImpl dataDriveMemory = new DataDriveMemoryImpl(1000);
+
+
+        public void start() throws IOException {
+            ServerSocket server = new ServerSocket(PORT, 50, InetAddress.getByName(ADDRESS));
+            while (isRunning) {
+
+
+                Socket socket = server.accept();
+                new Database(socket, dataDriveMemory, this).handleRequest();
+
+            }
+            server.close();
+        }
+
+        public void setRunning(boolean running) {
+            isRunning = running;
+        }
+    }
+  learner_created: true
+- name: src/server/commands/UnknownCommand.java
+  visible: true
+  text: |
+    package server.commands;
+
+    import server.input.Input;
+    import server.output.OutputProvider;
+
+    public class UnknownCommand extends Command {
+        private final OutputProvider outputProvider;
+
+        public UnknownCommand(Input input, OutputProvider outputProvider) {
+            super(input, null);
+            this.outputProvider = outputProvider;
+        }
+
+        @Override
+        public boolean execute() {
+            outputProvider.send("Unknown Command");
+            return false;
+        }
+    }
+  learner_created: true
+- name: src/server/output/SocketOutputProvider.java
+  visible: true
+  text: |
+    package server.output;
+
+    import java.io.DataOutputStream;
+    import java.io.IOException;
+
+    public class SocketOutputProvider implements OutputProvider {
+        private DataOutputStream output;
+
+        public SocketOutputProvider(DataOutputStream output) {
+            this.output = output;
+        }
+
+        @Override
+        public void send(String msg) {
+            try {
+                output.writeUTF(msg);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+  learner_created: true
+- name: src/server/input/EnumConverter.java
+  visible: true
+  text: |+
+    package server.input;
+
+    import com.beust.jcommander.IStringConverter;
+
+    public class EnumConverter implements IStringConverter<CommandEnum> {
+        @Override
+        public CommandEnum convert(String value) {
+            return CommandEnum.valueOf(value.toUpperCase());
+        }
+    }
+
+  learner_created: true
+- name: src/server/output/OutputProvider.java
+  visible: true
+  text: |
+    package server.output;
+
+    public interface OutputProvider {
+        void send(String msg);
+    }
+  learner_created: true
+- name: src/server/commands/set/SetCommand.java
+  visible: true
+  text: |
+    package server.commands.set;
+
+    import server.commands.Command;
+    import server.file.DataDriveFacade;
+    import server.input.Input;
+
+    import java.util.Objects;
+
+    public class SetCommand extends Command {
+
+        public SetCommand(Input input, DataDriveFacade dataSave) {
+            super(input, dataSave);
+        }
+
+        @Override
+        public boolean execute() {
+            if (isNumberCellValid() || Objects.isNull(input.getValue())) {
+                return false;
+            }
+            return dataSave.write(getMsgInput(), getCell());
+        }
+
+        private String getMsgInput() {
+            return input.getValue();
+        }
+
+        private int getCell() {
+            return input.getCell();
+        }
+
+    }
+  learner_created: true
+- name: src/server/input/CommandEnum.java
+  visible: true
+  text: |
+    package server.input;
+
+    public enum CommandEnum {
+        GET,
+        SET,
+        DELETE,
+        EXIT,
+        UNKNOWN,
+        ERROR
+    }
+  learner_created: true
+- name: src/server/commands/delete/DeleteCommand.java
+  visible: true
+  text: |
+    package server.commands.delete;
+
+    import server.commands.Command;
+    import server.file.DataDriveFacade;
+    import server.input.Input;
+
+    public class DeleteCommand extends Command {
+        public DeleteCommand(Input input, DataDriveFacade dataSave) {
+            super(input, dataSave);
+        }
+
+        @Override
+        public boolean execute() {
+            if (isNumberCellValid()) {
+                return false;
+            }
+            return dataSave.clear(input.getCell());
+        }
+    }
+  learner_created: true
+- name: src/server/file/DataDriveFacade.java
+  visible: true
+  text: |
+    package server.file;
+
+    public interface DataDriveFacade {
+        boolean write(String message, int cell);
+
+        String read(int cell);
+
+        boolean clear(int cell);
+    }
+  learner_created: true
+- name: src/server/file/DataDriveMemoryImpl.java
+  visible: true
+  text: |
+    package server.file;
+
+    import java.util.ArrayList;
+    import java.util.List;
+
+    public class DataDriveMemoryImpl implements DataDriveFacade {
+        private List<String> dataInList;
+
+        public DataDriveMemoryImpl(int size) {
+            dataInList = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                dataInList.add("");
+            }
+        }
+
+        @Override
+        public boolean write(String message, int cell) {
+            dataInList.set(cell, message);
+            return true;
+        }
+
+        @Override
+        public String read(int cell) {
+            return dataInList.get(cell);
+        }
+
+        @Override
+        public boolean clear(int cell) {
+            return write("", cell);
+        }
+    }
+  learner_created: true
+- name: src/server/commands/exit/ExitCommand.java
+  visible: true
+  text: |
+    package server.commands.exit;
+
+    import server.Database;
+    import server.Server;
+    import server.commands.Command;
+    import server.output.OutputProvider;
+
+    public class ExitCommand extends Command {
+
+        private final Database database;
+        private OutputProvider outputProvider;
+        private Server server;
+
+        public ExitCommand(Database database, OutputProvider outputProvider, Server server) {
+            super(null, null);
+            this.database = database;
+            this.outputProvider = outputProvider;
+            this.server = server;
+        }
+
+        @Override
+        public boolean execute() {
+            database.setRunning(false);
+            outputProvider.send("OK");
+
+            database.closeConnection();
+            server.setRunning(false);
+            return true;
+        }
+    }
+  learner_created: true
+- name: src/server/commands/get/GetCommand.java
+  visible: true
+  text: |
+    package server.commands.get;
+
+    import server.commands.Command;
+    import server.file.DataDriveFacade;
+    import server.input.Input;
+    import server.output.OutputProvider;
+
+    public class GetCommand extends Command {
+        private final OutputProvider outputProvider;
+
+        public GetCommand(Input input, DataDriveFacade dataHardDrive, OutputProvider outputProvider) {
+            super(input, dataHardDrive);
+            this.outputProvider = outputProvider;
+        }
+
+        @Override
+        public boolean execute() {
+            if (isNumberCellValid()) {
+                return false;
+            }
+            String message = dataSave.read(input.getCell());
+            if (message.isEmpty()) {
+                return false;
+            }
+            outputProvider.send(message);
+            return true;
+        }
+    }
+  learner_created: true
+- name: src/server/input/InputProvider.java
+  visible: true
+  text: |
+    package server.input;
+
+    public interface InputProvider {
+        Input getInputCommand();
+    }
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/351/implement#comment
 status: Unchecked
 record: -1

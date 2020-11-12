@@ -1,23 +1,23 @@
 package server.commands.set;
 
 import server.commands.Command;
-import server.file.FileChannelFacade;
+import server.file.DataDriveFacade;
 import server.input.Input;
+
+import java.util.Objects;
 
 public class SetCommand extends Command {
 
-    public SetCommand(Input input) {
-        super(input);
+    public SetCommand(Input input, DataDriveFacade dataSave) {
+        super(input, dataSave);
     }
 
     @Override
     public boolean execute() {
-        if (isNumberCellValid()) {
+        if (isNumberCellValid() || Objects.isNull(input.getValue())) {
             return false;
         }
-
-        FileChannelFacade fileChannelFacade = new FileChannelFacade();
-        return fileChannelFacade.write(getMsgInput(), getCell());
+        return dataSave.write(getMsgInput(), getCell());
     }
 
     private String getMsgInput() {

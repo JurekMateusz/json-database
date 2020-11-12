@@ -1,23 +1,43 @@
-server/view/Console.java
- server.view.Console
-server/commands/set/SetCommand.java
- server.commands.set.SetCommand
-server/input/Input.java
- server.input.Input
-server/file/FileChannelFacade.java
- server.file.FileChannelFacade
-server/commands/delete/DeleteCommand.java
- server.commands.delete.DeleteCommand
-server/commands/Command.java
- server.commands.Command
 server/commands/get/GetCommand.java
  server.commands.get.GetCommand
-server/commands/CommandEnum.java
- server.commands.CommandEnum
-server/commands/UnknownCommand.java
- server.commands.UnknownCommand
 server/input/InputProvider.java
  server.input.InputProvider
+server/commands/delete/DeleteCommand.java
+ server.commands.delete.DeleteCommand
+server/input/Input.java
+ server.input.Input
+server/output/SocketOutputProvider.java
+ server.output.SocketOutputProvider
+server/input/SocketInputProviderImpl.java
+ server.input.SocketInputProviderImpl
+client/input/EnumConverter.java
+ client.input.EnumConverter
+server/input/CommandEnum.java
+ server.input.CommandEnum
+client/input/CommandEnum.java
+ client.input.CommandEnum
+server/commands/UnknownCommand.java
+ server.commands.UnknownCommand
+server/commands/set/SetCommand.java
+ server.commands.set.SetCommand
+server/output/OutputProvider.java
+ server.output.OutputProvider
+server/file/DataDriveMemoryImpl.java
+ server.file.DataDriveMemoryImpl
+client/input/Input.java
+ client.input.Input
+server/commands/Command.java
+ server.commands.Command
+server/input/ConsoleInputProviderImpl.java
+ server.input.ConsoleInputProviderImpl
+server/input/EnumConverter.java
+ server.input.EnumConverter
+server/file/DataDriveFileImpl.java
+ server.file.DataDriveFileImpl
+server/file/DataDriveFacade.java
+ server.file.DataDriveFacade
+server/output/Console.java
+ server.output.Console
 client/Main.java
  client.Main
 server/Main.java
@@ -26,3 +46,5 @@ server/commands/exit/ExitCommand.java
  server.commands.exit.ExitCommand
 server/Database.java
  server.Database
+server/Server.java
+ server.Server

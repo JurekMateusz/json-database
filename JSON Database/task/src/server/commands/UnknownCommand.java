@@ -1,16 +1,19 @@
 package server.commands;
 
 import server.input.Input;
-import server.view.Console;
+import server.output.OutputProvider;
 
 public class UnknownCommand extends Command {
-    public UnknownCommand(Input input) {
-        super(input);
+    private final OutputProvider outputProvider;
+
+    public UnknownCommand(Input input, OutputProvider outputProvider) {
+        super(input, null);
+        this.outputProvider = outputProvider;
     }
 
     @Override
     public boolean execute() {
-        Console.log("Unknown Command");
+        outputProvider.send("Unknown Command");
         return false;
     }
 }

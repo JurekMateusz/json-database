@@ -191,6 +191,423 @@ files:
         }
     }
   learner_created: false
+- name: src/server/Database.java
+  visible: true
+  text: |
+    package server;
+
+    import server.input.Input;
+    import server.input.InputProvider;
+    import server.view.Console;
+
+    import java.io.DataInputStream;
+    import java.io.DataOutputStream;
+    import java.io.IOException;
+    import java.net.InetAddress;
+    import java.net.ServerSocket;
+    import java.net.Socket;
+
+    import static server.commands.CommandEnum.EXIT;
+    import static server.commands.CommandEnum.GET;
+
+    public class Database {
+        private boolean isRunning = true;
+        private InputProvider inputProvider;
+
+        public Database(InputProvider inputProvider) {
+            this.inputProvider = inputProvider;
+        }
+
+        public void start() throws IOException {
+            Console.log("Server started!");
+    //        while (isRunning) {
+    //            Input input = inputProvider.getInputCommand();
+    //            Command command = Match(input.getCommand()).of(
+    //                    Case($(GET), new GetCommand(input)),
+    //                    Case($(SET), new SetCommand(input)),
+    //                    Case($(DELETE), new DeleteCommand(input)),
+    //                    Case($(EXIT), new ExitCommand(this)),
+    //                    Case($(UNKNOWN), new UnknownCommand(input))
+    //            );
+    //            boolean status = command.execute();
+    //            print(status, input);
+    //        }
+            String address = "127.0.0.1";
+            int port = 23456;
+            ServerSocket server = new ServerSocket(port, 50, InetAddress.getByName(address));
+            Socket socket = server.accept();
+            DataInputStream input = new DataInputStream(socket.getInputStream());
+            DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+            String inputt = input.readUTF();
+            inputt = "Received: " + inputt;
+            System.out.println(inputt);
+            System.out.println("Sent: A record # 12 was sent!");
+            output.writeUTF("A record # 12 was sent!");
+
+        }
+
+        private void print(boolean status, Input input) {
+            if ((input.getCommand() == GET && status) || input.getCommand() == EXIT) {
+                return;
+            }
+            String message = status ? "OK" : "ERROR";
+            Console.log(message);
+        }
+
+        public void setRunning(boolean running) {
+            isRunning = running;
+        }
+    }
+  learner_created: true
+- name: src/server/commands/Command.java
+  visible: true
+  text: |
+    package server.commands;
+
+    import server.input.Input;
+
+    public abstract class Command {
+        protected Input input;
+
+        protected Command(Input input) {
+            this.input = input;
+        }
+
+        public abstract boolean execute();
+
+        protected boolean isNumberCellValid() {
+            return input.getCell() < 0 || input.getCell() > 100;
+        }
+    }
+  learner_created: true
+- name: src/server/input/Input.java
+  visible: true
+  text: |
+    package server.input;
+
+    import server.commands.CommandEnum;
+    import lombok.AccessLevel;
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+
+    @Getter
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public class Input {
+        private CommandEnum command;
+        private int cell;
+        private String value;
+
+        public static Input of(CommandEnum commandEnum, int cell) {
+            return new Input(commandEnum, cell, "Not given");
+        }
+
+        public static Input of(CommandEnum commandEnum, int cell, String value) {
+            return new Input(commandEnum, cell, value);
+        }
+    }
+  learner_created: true
+- name: src/server/commands/UnknownCommand.java
+  visible: true
+  text: |
+    package server.commands;
+
+    import server.input.Input;
+    import server.view.Console;
+
+    public class UnknownCommand extends Command {
+        public UnknownCommand(Input input) {
+            super(input);
+        }
+
+        @Override
+        public boolean execute() {
+            Console.log("Unknown Command");
+            return false;
+        }
+    }
+  learner_created: true
+- name: src/server/commands/set/SetCommand.java
+  visible: true
+  text: |
+    package server.commands.set;
+
+    import server.commands.Command;
+    import server.file.FileChannelFacade;
+    import server.input.Input;
+
+    public class SetCommand extends Command {
+
+        public SetCommand(Input input) {
+            super(input);
+        }
+
+        @Override
+        public boolean execute() {
+            if (isNumberCellValid()) {
+                return false;
+            }
+
+            FileChannelFacade fileChannelFacade = new FileChannelFacade();
+            return fileChannelFacade.write(getMsgInput(), getCell());
+        }
+
+        private String getMsgInput() {
+            return input.getValue();
+        }
+
+        private int getCell() {
+            return input.getCell();
+        }
+
+    }
+  learner_created: true
+- name: src/server/commands/delete/DeleteCommand.java
+  visible: true
+  text: |
+    package server.commands.delete;
+
+    import server.commands.Command;
+    import server.file.FileChannelFacade;
+    import server.input.Input;
+
+    import static server.file.FileChannelFacade.EMPTY_CELL;
+
+    public class DeleteCommand extends Command {
+        public DeleteCommand(Input input) {
+            super(input);
+        }
+
+        @Override
+        public boolean execute() {
+            if (isNumberCellValid()) {
+                return false;
+            }
+            FileChannelFacade fileChannelFacade = new FileChannelFacade();
+            return fileChannelFacade.write(EMPTY_CELL, input.getCell());
+        }
+    }
+  learner_created: true
+- name: src/server/commands/exit/ExitCommand.java
+  visible: true
+  text: |
+    package server.commands.exit;
+
+    import server.Database;
+    import server.commands.Command;
+
+    public class ExitCommand extends Command {
+
+        private final Database database;
+
+        public ExitCommand(Database database) {
+            super(null);
+            this.database = database;
+        }
+
+        @Override
+        public boolean execute() {
+            database.setRunning(false);
+            return true;
+        }
+    }
+  learner_created: true
+- name: src/server/commands/get/GetCommand.java
+  visible: true
+  text: |
+    package server.commands.get;
+
+    import server.commands.Command;
+    import server.file.FileChannelFacade;
+    import server.input.Input;
+    import server.view.Console;
+
+    public class GetCommand extends Command {
+
+        public GetCommand(Input input) {
+            super(input);
+        }
+
+        @Override
+        public boolean execute() {
+            if (isNumberCellValid()) {
+                return false;
+            }
+            FileChannelFacade fileChannelFacade = new FileChannelFacade();
+            String message = fileChannelFacade.read(input.getCell());
+            if (message.isEmpty()) {
+                return false;
+            } else {
+                Console.log(message);
+                return true;
+            }
+        }
+    }
+  learner_created: true
+- name: src/server/input/InputProvider.java
+  visible: true
+  learner_created: true
+- name: src/server/input/SocketInputProviderImpl.java
+  visible: true
+  learner_created: true
+- name: src/server/input/ConsoleInputProviderImpl.java
+  visible: true
+  text: |
+    package server.input;
+
+    import server.commands.CommandEnum;
+    import io.vavr.control.Try;
+
+    import java.util.Scanner;
+
+    import static server.commands.CommandEnum.SET;
+    import static server.commands.CommandEnum.UNKNOWN;
+
+    public class InputProvider {
+        private Scanner scanner = new Scanner(System.in);
+
+        public Input getInputCommand() {
+            String input = scanner.nextLine();
+            String[] split = input.split(" +",3);
+            CommandEnum commandEnum = parseCommand(split[0]);
+            int cell = parseCell(split);
+            if (commandEnum == SET) {
+                Try<String> valueTry = Try.of(() -> split[2]);
+                if (valueTry.isSuccess()) {
+                    return Input.of(commandEnum, cell, valueTry.get());
+                }
+            }
+            return Input.of(commandEnum, cell);
+        }
+
+
+        private CommandEnum parseCommand(String input) {
+            Try<CommandEnum> command = Try.of(() -> CommandEnum.valueOf(input.toUpperCase()));
+            return command.getOrElse(UNKNOWN);
+        }
+
+        private int parseCell(String[] cell) {
+            Try<Integer> of = Try.of(() -> Integer.parseInt(cell[1]));
+            return of.getOrElse(-1);
+        }
+
+    }
+  learner_created: true
+- name: src/server/output/Console.java
+  visible: true
+  text: |
+    package server.view;
+
+    public class Console {
+        public static void log(String msg) {
+            System.out.println(msg);
+        }
+    }
+  learner_created: true
+- name: src/server/output/OutputProvider.java
+  visible: true
+  learner_created: true
+- name: src/server/output/SocketOutputProvider.java
+  visible: true
+  learner_created: true
+- name: src/server/file/DataDriveFacade.java
+  visible: true
+  learner_created: true
+- name: src/server/file/DataDriveFileImpl.java
+  visible: true
+  text: |
+    package server.file;
+
+    import java.io.IOException;
+    import java.nio.ByteBuffer;
+    import java.nio.channels.FileChannel;
+    import java.nio.file.Path;
+    import java.util.Objects;
+
+    import static java.nio.file.StandardOpenOption.READ;
+    import static java.nio.file.StandardOpenOption.WRITE;
+
+    public class FileChannelFacade {
+        private static final int SIZE_CELL = 50;
+        public static final String EMPTY_CELL = " ".repeat(SIZE_CELL-1);
+        private final Path file = Path.of("D:\\PROJEKTY\\JSON Database\\database.txt");
+
+        private byte[] createCellBytes(String message) {
+            StringBuilder messageBuilder = new StringBuilder(message);
+            messageBuilder.append(" ".repeat(Math.max(0, SIZE_CELL - messageBuilder.length())));
+            message = messageBuilder.toString();
+            return message.getBytes();
+        }
+
+        public void prepare(int numberOfCells) {
+            StringBuilder messageBuilder = new StringBuilder();
+            messageBuilder.append(" ".repeat(50));
+            for (int i = 0; i < numberOfCells; i++) {
+                write(messageBuilder.toString(), i);
+            }
+        }
+
+        private int countCellPosition(int cell) {
+            return cell * SIZE_CELL;
+        }
+
+        public boolean write(String message, int cell) {
+            assert Objects.nonNull(message);
+            assert message.length() < SIZE_CELL;
+
+            byte[] bytes = createCellBytes(message);
+            ByteBuffer out = ByteBuffer.wrap(bytes);
+            try (FileChannel fc = (FileChannel.open(file, WRITE))) {
+                int cellPosition = countCellPosition(cell);
+                fc.position(cellPosition);
+                while (out.hasRemaining())
+                    fc.write(out);
+            } catch (IOException x) {
+                x.printStackTrace();
+            }
+            return true;
+        }
+
+        public String read(int cell) {
+            ByteBuffer result = ByteBuffer.allocate(SIZE_CELL);
+            try (FileChannel fc = (FileChannel.open(file, READ))) {
+                int position = countCellPosition(cell);
+                fc.read(result, position);
+            } catch (IOException x) {
+                x.printStackTrace();
+            }
+            result.flip();
+            return new String(result.array()).trim();
+        }
+
+    }
+  learner_created: true
+- name: src/server/Server.java
+  visible: true
+  learner_created: true
+- name: src/server/file/DataDriveMemoryImpl.java
+  visible: true
+  learner_created: true
+- name: src/server/input/EnumConverter.java
+  visible: true
+  learner_created: true
+- name: src/server/input/CommandEnum.java
+  visible: true
+  text: |
+    package server.commands;
+
+    public enum CommandEnum {
+        GET,
+        SET,
+        DELETE,
+        EXIT,
+        UNKNOWN,
+        ERROR
+    }
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/350/implement#comment
-status: Unchecked
-record: -1
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/65/stages/350/implement">JetBrains
+    Academy</a>
+  time: Thu, 12 Nov 2020 13:16:48 UTC
+record: 3

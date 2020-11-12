@@ -1,14 +1,16 @@
 package server.commands.get;
 
 import server.commands.Command;
-import server.file.FileChannelFacade;
+import server.file.DataDriveFacade;
 import server.input.Input;
-import server.view.Console;
+import server.output.OutputProvider;
 
 public class GetCommand extends Command {
+    private final OutputProvider outputProvider;
 
-    public GetCommand(Input input) {
-        super(input);
+    public GetCommand(Input input, DataDriveFacade dataHardDrive, OutputProvider outputProvider) {
+        super(input, dataHardDrive);
+        this.outputProvider = outputProvider;
     }
 
     @Override
@@ -16,13 +18,11 @@ public class GetCommand extends Command {
         if (isNumberCellValid()) {
             return false;
         }
-        FileChannelFacade fileChannelFacade = new FileChannelFacade();
-        String message = fileChannelFacade.read(input.getCell());
+        String message = dataSave.read(input.getCell());
         if (message.isEmpty()) {
             return false;
-        } else {
-            Console.log(message);
-            return true;
         }
+        outputProvider.send(message);
+        return true;
     }
 }
