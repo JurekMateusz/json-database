@@ -1,24 +1,20 @@
 package server.commands.set;
 
 import server.commands.Command;
-import server.file.DataDriveFacade;
+import server.file.DataDrive;
 import server.model.Input;
 import server.model.Output;
 
 public class SetCommand extends Command {
 
-    public SetCommand(Input input, DataDriveFacade dataSave) {
+    public SetCommand(Input input, DataDrive dataSave) {
         super(input, dataSave);
     }
 
     @Override
     public Output execute() {
-        dataSave.write(getMsgInput(), getKey());
+        dataSave.write(getValueToSave(), getKey());
         return Output.success();
-    }
-
-    private String getMsgInput() {
-        return input.getValue();
     }
 
     private String getKey() {

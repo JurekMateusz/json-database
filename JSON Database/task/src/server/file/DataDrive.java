@@ -1,6 +1,6 @@
 package server.file;
 
-public interface DataDriveFacade {
+public interface DataDrive {
     boolean write(String message, String key);
 
     String read(String key);

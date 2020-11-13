@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class DataDriveMemoryImpl implements DataDriveFacade {
+public class DataDriveMemoryImpl implements DataDrive {
     private Map<String, String> data = new HashMap<>();
 
     @Override

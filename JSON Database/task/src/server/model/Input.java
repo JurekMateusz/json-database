@@ -1,5 +1,6 @@
 package server.model;
 
+import com.google.gson.annotations.Expose;
 import lombok.*;
 import server.input.CommandEnum;
 
@@ -10,6 +11,7 @@ import server.input.CommandEnum;
 public class Input {
     private CommandEnum command;
     private String key;
+    @Expose
     private String value;
 
     public static Input empty() {

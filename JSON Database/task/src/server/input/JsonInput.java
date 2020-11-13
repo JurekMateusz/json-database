@@ -1,6 +1,5 @@
 package server.input;
 
-import com.beust.jcommander.Parameter;
 import lombok.Getter;
 
 @Getter

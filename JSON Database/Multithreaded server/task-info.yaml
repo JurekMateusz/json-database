@@ -580,6 +580,504 @@ files:
         }
     }
   learner_created: false
+- name: src/server/input/SocketInputProviderImpl.java
+  visible: true
+  text: |
+    package server.input;
+
+    import com.google.gson.Gson;
+    import io.vavr.control.Try;
+    import server.model.Input;
+
+    import java.io.DataInputStream;
+
+    public class SocketInputProviderImpl implements InputProvider {
+        private final DataInputStream input;
+        private final Gson gson = new Gson();
+
+        public SocketInputProviderImpl(DataInputStream input) {
+            this.input = input;
+        }
+
+        @Override
+        public Input getInputCommand() {
+            return Try.of(this.input::readUTF)
+                    .map(s -> gson.fromJson(s, JsonInput.class))
+                    .flatMap(jsonInput -> Try.of(() -> Input.builder()
+                            .command(CommandEnum.valueOf(jsonInput.getType().toUpperCase()))
+                            .key(jsonInput.getKey())
+                            .value(jsonInput.getValue())
+                            .build())
+                    ).getOrElse(Input.empty());
+        }
+    }
+  learner_created: true
+- name: src/server/output/Console.java
+  visible: true
+  text: |
+    package server.output;
+
+    import server.model.Output;
+
+    public class Console implements OutputProvider {
+        public void send(Output msg) {
+            System.out.println(msg);
+        }
+    }
+  learner_created: true
+- name: src/server/Database.java
+  visible: true
+  text: |
+    package server;
+
+    import server.commands.Command;
+    import server.commands.UnknownCommand;
+    import server.commands.delete.DeleteCommand;
+    import server.commands.exit.ExitCommand;
+    import server.commands.get.GetCommand;
+    import server.commands.set.SetCommand;
+    import server.file.DataDriveFacade;
+    import server.input.InputProvider;
+    import server.input.SocketInputProviderImpl;
+    import server.model.Input;
+    import server.model.Output;
+    import server.output.OutputProvider;
+    import server.output.SocketOutputProvider;
+
+    import java.io.DataInputStream;
+    import java.io.DataOutputStream;
+    import java.io.IOException;
+    import java.net.Socket;
+
+    import static io.vavr.API.*;
+    import static server.input.CommandEnum.*;
+
+    public class Database {
+        private boolean isRunning = true;
+        private Socket socket;
+        private Server server;
+        private InputProvider inputProvider;
+        private OutputProvider outputProvider;
+        private DataDriveFacade dataHardDrive;
+
+        public Database(Socket socket, DataDriveFacade dataHardDrive, Server server) throws IOException {
+            this.dataHardDrive = dataHardDrive;
+            this.socket = socket;
+            this.server = server;
+            DataInputStream input = new DataInputStream(socket.getInputStream());
+            DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+            inputProvider = new SocketInputProviderImpl(input);
+            outputProvider = new SocketOutputProvider(output);
+        }
+
+        public void handleRequest() throws IOException {
+            System.out.println("Server started!");
+            Input input = inputProvider.getInputCommand();
+            Command command = Match(input.getCommand()).of(
+                    Case($(GET), new GetCommand(input, dataHardDrive)),
+                    Case($(SET), new SetCommand(input, dataHardDrive)),
+                    Case($(DELETE), new DeleteCommand(input, dataHardDrive)),
+                    Case($(EXIT), new ExitCommand(server)),
+                    Case($(UNKNOWN), new UnknownCommand(input))
+            );
+            Output output = command.execute();
+            outputProvider.send(output);
+            closeConnection();
+        }
+
+        public void closeConnection() {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+  learner_created: true
+- name: src/server/commands/Command.java
+  visible: true
+  text: |
+    package server.commands;
+
+    import server.file.DataDriveFacade;
+    import server.model.Input;
+    import server.model.Output;
+    import server.output.OutputProvider;
+
+    public abstract class Command {
+        protected Input input;
+        protected DataDriveFacade dataSave;
+
+        protected Command(Input input, DataDriveFacade dataSave) {
+            this.input = input;
+            this.dataSave = dataSave;
+        }
+
+        public abstract Output execute();
+
+    }
+  learner_created: true
+- name: src/server/model/Input.java
+  visible: true
+  text: |
+    package server.model;
+
+    import lombok.*;
+    import server.input.CommandEnum;
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    @Builder
+    public class Input {
+        private CommandEnum command;
+        private String key;
+        private String value;
+
+        public static Input empty() {
+            return new Input(CommandEnum.UNKNOWN, "key", "Not given");
+        }
+    }
+  learner_created: true
+- name: src/server/Server.java
+  visible: true
+  text: |
+    package server;
+
+    import server.file.DataDriveMemoryImpl;
+
+    import java.io.IOException;
+    import java.net.InetAddress;
+    import java.net.ServerSocket;
+    import java.net.Socket;
+
+    public class Server {
+        private static final String ADDRESS = "127.0.0.1";
+        private static final int PORT = 23456;
+        private boolean isRunning = true;
+        private DataDriveMemoryImpl dataDriveMemory = new DataDriveMemoryImpl();
+
+
+        public void start() throws IOException {
+            ServerSocket server = new ServerSocket(PORT, 50, InetAddress.getByName(ADDRESS));
+            while (isRunning) {
+                Socket socket = server.accept();
+                new Database(socket, dataDriveMemory, this).handleRequest();
+            }
+            server.close();
+        }
+
+        public void setRunning(boolean running) {
+            isRunning = running;
+        }
+    }
+  learner_created: true
+- name: src/server/commands/UnknownCommand.java
+  visible: true
+  text: |
+    package server.commands;
+
+    import server.model.Input;
+    import server.model.Output;
+    import server.output.OutputProvider;
+
+    public class UnknownCommand extends Command {
+
+        public UnknownCommand(Input input) {
+            super(input, null);
+        }
+
+        @Override
+        public Output execute() {
+            return Output.failureWithReason("Unknown command");
+        }
+    }
+  learner_created: true
+- name: src/server/output/SocketOutputProvider.java
+  visible: true
+  text: |
+    package server.output;
+
+    import com.google.gson.Gson;
+    import server.model.Output;
+
+    import java.io.DataOutputStream;
+    import java.io.IOException;
+
+    public class SocketOutputProvider implements OutputProvider {
+        private DataOutputStream outputStream;
+        private Gson jsonParser = new Gson();
+
+        public SocketOutputProvider(DataOutputStream output) {
+            this.outputStream = output;
+        }
+
+        @Override
+        public void send(Output output) {
+            String json = jsonParser.toJson(output);
+            try {
+                outputStream.writeUTF(json);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+  learner_created: true
+- name: src/server/output/OutputProvider.java
+  visible: true
+  text: |
+    package server.output;
+
+    import server.model.Output;
+
+    public interface OutputProvider {
+        void send(Output output);
+    }
+  learner_created: true
+- name: src/server/input/JsonInput.java
+  visible: true
+  text: |
+    package server.input;
+
+    import com.beust.jcommander.Parameter;
+    import lombok.Getter;
+
+    @Getter
+    public class JsonInput {
+        private String type;
+        private String key;
+        private String value;
+    }
+  learner_created: true
+- name: src/server/model/Output.java
+  visible: true
+  text: |
+    package server.model;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+
+    @Getter
+    @AllArgsConstructor
+    public class Output {
+        private String response;
+        private String value;
+        private String reason;
+
+        public static Output failureWithReason(String reason) {
+            return new Output("ERROR", null, reason);
+        }
+
+        public static Output success() {
+            return new Output("OK", null, null);
+        }
+
+        public static Output successWithValue(String value) {
+            return new Output("OK", value, null);
+        }
+    }
+  learner_created: true
+- name: src/server/input/CommandEnum.java
+  visible: true
+  text: |
+    package server.input;
+
+    public enum CommandEnum {
+        GET,
+        SET,
+        DELETE,
+        EXIT,
+        UNKNOWN,
+        ERROR
+    }
+  learner_created: true
+- name: src/server/commands/set/SetCommand.java
+  visible: true
+  text: |
+    package server.commands.set;
+
+    import server.commands.Command;
+    import server.file.DataDriveFacade;
+    import server.model.Input;
+    import server.model.Output;
+
+    public class SetCommand extends Command {
+
+        public SetCommand(Input input, DataDriveFacade dataSave) {
+            super(input, dataSave);
+        }
+
+        @Override
+        public Output execute() {
+            dataSave.write(getMsgInput(), getKey());
+            return Output.success();
+        }
+
+        private String getMsgInput() {
+            return input.getValue();
+        }
+
+        private String getKey() {
+            return input.getKey();
+        }
+
+    }
+  learner_created: true
+- name: src/server/commands/delete/DeleteCommand.java
+  visible: true
+  text: |
+    package server.commands.delete;
+
+    import server.commands.Command;
+    import server.file.DataDriveFacade;
+    import server.model.Input;
+    import server.model.Output;
+
+    public class DeleteCommand extends Command {
+        public DeleteCommand(Input input, DataDriveFacade dataSave) {
+            super(input, dataSave);
+        }
+
+        @Override
+        public Output execute() {
+            if (dataSave.clear(input.getKey())) {
+                return Output.failureWithReason("No such key");
+            }
+            return Output.success();
+        }
+    }
+  learner_created: true
+- name: src/server/file/DataDriveMemoryImpl.java
+  visible: true
+  text: |
+    package server.file;
+
+    import java.util.HashMap;
+    import java.util.Map;
+    import java.util.Objects;
+
+    public class DataDriveMemoryImpl implements DataDriveFacade {
+        private Map<String, String> data = new HashMap<>();
+
+        @Override
+        public boolean write(String message, String key) {
+            data.put(key, message);
+            return true;
+        }
+
+        @Override
+        public String read(String key) {
+            return data.get(key);
+        }
+
+        @Override
+        public boolean clear(String key) {
+            return Objects.isNull(data.remove(key));
+        }
+    }
+  learner_created: true
+- name: src/server/commands/exit/ExitCommand.java
+  visible: true
+  text: |
+    package server.commands.exit;
+
+    import server.Database;
+    import server.Server;
+    import server.commands.Command;
+    import server.model.Output;
+
+    public class ExitCommand extends Command {
+        private Server server;
+
+        public ExitCommand(Server server) {
+            super(null, null);
+            this.server = server;
+        }
+
+        @Override
+        public Output execute() {
+            server.setRunning(false);
+            return Output.success();
+        }
+    }
+  learner_created: true
+- name: src/server/commands/get/GetCommand.java
+  visible: true
+  text: |
+    package server.commands.get;
+
+    import server.commands.Command;
+    import server.file.DataDriveFacade;
+    import server.model.Input;
+    import server.model.Output;
+
+    import java.util.Objects;
+
+    public class GetCommand extends Command {
+
+        public GetCommand(Input input, DataDriveFacade dataHardDrive) {
+            super(input, dataHardDrive);
+        }
+
+        @Override
+        public Output execute() {
+            String message = dataSave.read(input.getKey());
+            if (Objects.isNull(message)) {
+                return Output.failureWithReason("No such key");
+            }
+            return Output.successWithValue(message);
+        }
+    }
+  learner_created: true
+- name: src/server/input/InputProvider.java
+  visible: true
+  text: |
+    package server.input;
+
+    import server.model.Input;
+
+    public interface InputProvider {
+        Input getInputCommand();
+    }
+  learner_created: true
+- name: src/server/file/DataDriveFileImpl.java
+  visible: true
+  learner_created: true
+- name: src/server/file/DataDrive.java
+  visible: true
+  text: |
+    package server.file;
+
+    public interface DataDriveFacade {
+        boolean write(String message, String key);
+
+        String read(String key);
+
+        boolean clear(String key);
+    }
+  learner_created: true
+- name: src/client/input/FileConverter.java
+  visible: true
+  learner_created: true
+- name: src/client/input/Input.java
+  visible: true
+  learner_created: true
+- name: src/client/data/testGet.json
+  visible: true
+  learner_created: true
+- name: src/client/data/testSet.json
+  visible: true
+  learner_created: true
+- name: src/client/data/testDelete.json
+  visible: true
+  learner_created: true
+- name: src/server/data/db.json
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/65/stages/352/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/65/stages/352/implement">JetBrains
+    Academy</a>
+  time: Fri, 13 Nov 2020 16:14:20 UTC
 record: -1

@@ -1,3 +1,7 @@
 content:
 - Throw a checked exception
 - Undo command
+- Multithreaded counter
+- Countdown counter
+- Messaging
+- Check whether a number is prime

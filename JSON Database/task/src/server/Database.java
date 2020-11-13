@@ -6,7 +6,7 @@ import server.commands.delete.DeleteCommand;
 import server.commands.exit.ExitCommand;
 import server.commands.get.GetCommand;
 import server.commands.set.SetCommand;
-import server.file.DataDriveFacade;
+import server.file.DataDrive;
 import server.input.InputProvider;
 import server.input.SocketInputProviderImpl;
 import server.model.Input;
@@ -17,20 +17,20 @@ import server.output.SocketOutputProvider;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 import static io.vavr.API.*;
 import static server.input.CommandEnum.*;
 
-public class Database {
-    private boolean isRunning = true;
+public class Database implements Runnable {
     private Socket socket;
-    private Server server;
+    private ServerSocket server;
     private InputProvider inputProvider;
     private OutputProvider outputProvider;
-    private DataDriveFacade dataHardDrive;
+    private DataDrive dataHardDrive;
 
-    public Database(Socket socket, DataDriveFacade dataHardDrive, Server server) throws IOException {
+    public Database(Socket socket, DataDrive dataHardDrive, ServerSocket server) throws IOException {
         this.dataHardDrive = dataHardDrive;
         this.socket = socket;
         this.server = server;
@@ -40,8 +40,12 @@ public class Database {
         outputProvider = new SocketOutputProvider(output);
     }
 
-    public void handleRequest() throws IOException {
-        System.out.println("Server started!");
+    @Override
+    public void run() {
+        handleRequest();
+    }
+
+    public void handleRequest() {
         Input input = inputProvider.getInputCommand();
         Command command = Match(input.getCommand()).of(
                 Case($(GET), new GetCommand(input, dataHardDrive)),

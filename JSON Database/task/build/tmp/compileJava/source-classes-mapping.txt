@@ -1,51 +1,52 @@
-server/Database.java
- server.Database
-client/input/CommandEnum.java
- client.input.CommandEnum
-server/model/Output.java
- server.model.Output
-server/Main.java
- server.Main
-server/file/DataDriveFacade.java
- server.file.DataDriveFacade
+server/Server.java
+ server.Server
+server/file/DataDriveMemoryImpl.java
+ server.file.DataDriveMemoryImpl
+client/input/InputFromCommand.java
+ client.input.InputFromCommand
+client/input/Input.java
+ client.input.Input
+ client.input.Input$InputBuilder
 server/output/SocketOutputProvider.java
  server.output.SocketOutputProvider
-server/output/OutputProvider.java
- server.output.OutputProvider
-server/output/Console.java
- server.output.Console
-client/input/EnumConverter.java
- client.input.EnumConverter
+client/Main.java
+ client.Main
 server/input/CommandEnum.java
  server.input.CommandEnum
-server/input/EnumConverter.java
- server.input.EnumConverter
+server/model/Output.java
+ server.model.Output
+client/input/FileConverter.java
+ client.input.FileConverter
+server/file/DataDriveFileImpl.java
+ server.file.DataDriveFileImpl
+server/output/Console.java
+ server.output.Console
+server/Main.java
+ server.Main
+server/output/OutputProvider.java
+ server.output.OutputProvider
+server/input/JsonInput.java
+ server.input.JsonInput
+server/file/DataDrive.java
+ server.file.DataDrive
+server/input/InputProvider.java
+ server.input.InputProvider
 server/model/Input.java
  server.model.Input
  server.model.Input$InputBuilder
-server/input/JsonInput.java
- server.input.JsonInput
-server/input/InputProvider.java
- server.input.InputProvider
+server/input/SocketInputProviderImpl.java
+ server.input.SocketInputProviderImpl
 server/commands/get/GetCommand.java
  server.commands.get.GetCommand
 server/commands/UnknownCommand.java
  server.commands.UnknownCommand
 server/commands/set/SetCommand.java
  server.commands.set.SetCommand
-client/input/Input.java
- client.input.Input
 server/commands/delete/DeleteCommand.java
  server.commands.delete.DeleteCommand
 server/commands/exit/ExitCommand.java
  server.commands.exit.ExitCommand
-server/input/SocketInputProviderImpl.java
- server.input.SocketInputProviderImpl
-client/Main.java
- client.Main
+server/Database.java
+ server.Database
 server/commands/Command.java
  server.commands.Command
-server/file/DataDriveMemoryImpl.java
- server.file.DataDriveMemoryImpl
-server/Server.java
- server.Server

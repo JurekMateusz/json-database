@@ -1,64 +1,65 @@
 [1;31m
 Start test 1[0m
-Client started!
+[1;31m
+Start test 2[0m
 Server started!
+Client started!
 Send: {"type":"exit"}
 Received: {"response":"OK"}
 [1;31m
-Start test 2[0m
-Client started!
+Start test 3[0m
 Server started!
+Client started!
  Send: {"type":"get","key":"1"}
 7Received: {"response":"ERROR","reason":"No such key"}
-Server started!
 Client started!
 7Send: {"type":"set","key":"1","value":"Hello world!"}
 Received: {"response":"OK"}
-Server started!
 Client started!
 6Send: {"type":"set","key":"1","value":"HelloWorld!"}
 Received: {"response":"OK"}
-Server started!
 Client started!
  Send: {"type":"get","key":"1"}
 3Received: {"response":"OK","value":"HelloWorld!"}
-Server started!
 Client started!
 #Send: {"type":"delete","key":"1"}
 Received: {"response":"OK"}
-Server started!
 Client started!
 #Send: {"type":"delete","key":"1"}
 7Received: {"response":"ERROR","reason":"No such key"}
-Server started!
 Client started!
  Send: {"type":"get","key":"1"}
 7Received: {"response":"ERROR","reason":"No such key"}
-Server started!
 Client started!
 <Send: {"type":"set","key":"text","value":"Some text here"}
 Received: {"response":"OK"}
-Server started!
 Client started!
 #Send: {"type":"get","key":"text"}
 6Received: {"response":"OK","value":"Some text here"}
-Server started!
 Client started!
 !Send: {"type":"get","key":"56"}
 7Received: {"response":"ERROR","reason":"No such key"}
-Server started!
 Client started!
 $Send: {"type":"delete","key":"56"}
 7Received: {"response":"ERROR","reason":"No such key"}
-Server started!
 Client started!
 %Send: {"type":"delete","key":"100"}
 7Received: {"response":"ERROR","reason":"No such key"}
-Server started!
 Client started!
 =Send: {"type":"delete","key":"That key doesn\u0027t exist"}
 7Received: {"response":"ERROR","reason":"No such key"}
-Server started!
+Client started!
+2Send: {"type":"set","key":"name","value":"Kate"}
+Received: {"response":"OK"}
+Client started!
+#Send: {"type":"get","key":"name"}
+,Received: {"response":"OK","value":"Kate"}
+Client started!
+&Send: {"type":"delete","key":"name"}
+Received: {"response":"OK"}
+Client started!
+#Send: {"type":"get","key":"name"}
+7Received: {"response":"ERROR","reason":"No such key"}
 Client started!
 Send: {"type":"exit"}
 Received: {"response":"OK"}
